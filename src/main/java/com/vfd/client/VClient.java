@@ -33,7 +33,7 @@ public class VClient {
 
     private Channel channel = null;
 
-    final RpcResponseMessageHandler RPC_HANDLER = new RpcResponseMessageHandler();
+    RpcResponseMessageHandler RPC_HANDLER = new RpcResponseMessageHandler();
 
     public VClient() {
     }
@@ -117,6 +117,8 @@ public class VClient {
 
     public void closeConnect () {
         if (channel != null)    channel.close();
+        channel = null;
+        RPC_HANDLER = new RpcResponseMessageHandler();
     }
 
     public <T> T getRemoteObj (Class<T> interfaceType) {
@@ -155,31 +157,31 @@ public class VClient {
     private <T> T getRemoteObj0 (String destHost, int destPort, Serializer serializer,
                                 Class<T> interfaceType) {
         final Object o = Proxy.newProxyInstance(interfaceType.getClassLoader(), new Class[] {interfaceType},
-                ((proxy, method, args) -> {
-                    final int sequenceId = SequenceIdGenerator.nextId();
-                    RpcRequestMessage msg = new RpcRequestMessage(
-                            sequenceId,
-                            interfaceType.getName(),
-                            method.getName(),
-                            method.getReturnType(),
-                            method.getParameterTypes(),
-                            args
-                    );
-                    final Channel ch = getChannel(destHost, destPort, serializer);
-                    ch.writeAndFlush(msg);
-                    DefaultPromise<Object> promise = new DefaultPromise<>(ch.eventLoop());
-                    RPC_HANDLER.getPROMISES().put(sequenceId, promise);
-                    promise.await();
-                    if (promise.isSuccess()) {
-                        final Object now = promise.getNow();
-                        if (closeConnect)   closeConnect();
-                        return now;
-                    } else {
-                        final Throwable cause = promise.cause();
-                        ch.close();
-                        throw new RuntimeException(cause);
-                    }
-                }));
+            ((proxy, method, args) -> {
+                final int sequenceId = SequenceIdGenerator.nextId();
+                RpcRequestMessage msg = new RpcRequestMessage(
+                        sequenceId,
+                        interfaceType.getName(),
+                        method.getName(),
+                        method.getReturnType(),
+                        method.getParameterTypes(),
+                        args
+                );
+                final Channel ch = getChannel(destHost, destPort, serializer);
+                ch.writeAndFlush(msg);
+                DefaultPromise<Object> promise = new DefaultPromise<>(ch.eventLoop());
+                RPC_HANDLER.getPROMISES().put(sequenceId, promise);
+                promise.await();
+                if (promise.isSuccess()) {
+                    final Object now = promise.getNow();
+                    if (closeConnect)   closeConnect();
+                    return now;
+                } else {
+                    final Throwable cause = promise.cause();
+                    closeConnect();
+                    throw new RuntimeException(cause);
+                }
+            }));
         return (T) o;
     }
 

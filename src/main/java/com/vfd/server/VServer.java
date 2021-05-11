@@ -25,13 +25,25 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class RPCServer {
 
-    private final int port;
+    private int port;
     private Serializer serializer = new FastjsonSerializer();
+    private String interfaceToImplement;
 
-    public static final Map<Integer, Channel> channelMap = new ConcurrentHashMap<>();
+    public final Map<Integer, Channel> channelMap = new ConcurrentHashMap<>();
+
+    public RPCServer() {
+    }
 
     public RPCServer(int port) {
         this.port = port;
+    }
+
+    public RPCServer(String interfaceToImplement) {
+        this.interfaceToImplement = interfaceToImplement;
+    }
+
+    public RPCServer(Serializer serializer) {
+        this.serializer = serializer;
     }
 
     public RPCServer(int port, Serializer serializer) {
@@ -39,12 +51,65 @@ public class RPCServer {
         this.serializer = serializer;
     }
 
+    public RPCServer(Serializer serializer, String interfaceToImplement) {
+        this.serializer = serializer;
+        this.interfaceToImplement = interfaceToImplement;
+    }
+
+    public RPCServer(int port, String interfaceToImplement) {
+        this.port = port;
+        this.interfaceToImplement = interfaceToImplement;
+    }
+
+    public RPCServer(int port, Serializer serializer, String interfaceToImplement) {
+        this.port = port;
+        this.serializer = serializer;
+        this.interfaceToImplement = interfaceToImplement;
+    }
+
+    public void startProvideServer () {
+        provide0(this.port, this.serializer, this.interfaceToImplement);
+    }
+
+    public void startProvideServer (int port) {
+        provide0(port, serializer, interfaceToImplement);
+    }
+
+    public void startProvideServer (Serializer serializer) {
+        provide0(this.port, serializer, this.interfaceToImplement);
+    }
+
+    public void startProvideServer (String interfaceToImplement) {
+        provide0(this.port, this.serializer, interfaceToImplement);
+    }
+
+    public void startProvideServer (int port, Serializer serializer) {
+        provide0(port, serializer, this.interfaceToImplement);
+    }
+
+    public void startProvideServer (int port, String interfaceToImplement) {
+        provide0(port, this.serializer, interfaceToImplement);
+    }
+
+    public void startProvideServer (Serializer serializer,  String interfaceToImplement) {
+        provide0(this.port, serializer, interfaceToImplement);
+    }
+
+    public void startProvideServer (int port, Serializer serializer, String interfaceToImplement) {
+        provide0(port, serializer, interfaceToImplement);
+    }
+
+    public void closeProvideServer (int port) {
+        final Channel channel = channelMap.getOrDefault(port, null);
+        if (channel != null)    channel.close();
+    }
+
     // 为远程的服务消费者提供服务
-    public void provider() {
+    private void provide0(int port, Serializer serializer, String interfaceToImplement) {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         MessageCodec MESSAGE_CODEC = new MessageCodec(serializer);
-        RpcRequestMessageHandler RPC_HANDLER = new RpcRequestMessageHandler();
+        RpcRequestMessageHandler RPC_HANDLER = new RpcRequestMessageHandler(interfaceToImplement);
 
         try {
             ServerBootstrap serverBootStrap = new ServerBootstrap();

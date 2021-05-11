@@ -10,8 +10,6 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: vfdxvffd
  * @date: 2021/5/10 上午11:17
  */
-public class RPCServer {
+@SuppressWarnings("unused")
+public class VServer {
 
     private int port;
     private Serializer serializer = new FastjsonSerializer();
@@ -31,37 +30,37 @@ public class RPCServer {
 
     public final Map<Integer, Channel> channelMap = new ConcurrentHashMap<>();
 
-    public RPCServer() {
+    public VServer() {
     }
 
-    public RPCServer(int port) {
+    public VServer(int port) {
         this.port = port;
     }
 
-    public RPCServer(String interfaceToImplement) {
+    public VServer(String interfaceToImplement) {
         this.interfaceToImplement = interfaceToImplement;
     }
 
-    public RPCServer(Serializer serializer) {
+    public VServer(Serializer serializer) {
         this.serializer = serializer;
     }
 
-    public RPCServer(int port, Serializer serializer) {
+    public VServer(int port, Serializer serializer) {
         this.port = port;
         this.serializer = serializer;
     }
 
-    public RPCServer(Serializer serializer, String interfaceToImplement) {
+    public VServer(Serializer serializer, String interfaceToImplement) {
         this.serializer = serializer;
         this.interfaceToImplement = interfaceToImplement;
     }
 
-    public RPCServer(int port, String interfaceToImplement) {
+    public VServer(int port, String interfaceToImplement) {
         this.port = port;
         this.interfaceToImplement = interfaceToImplement;
     }
 
-    public RPCServer(int port, Serializer serializer, String interfaceToImplement) {
+    public VServer(int port, Serializer serializer, String interfaceToImplement) {
         this.port = port;
         this.serializer = serializer;
         this.interfaceToImplement = interfaceToImplement;
@@ -117,7 +116,7 @@ public class RPCServer {
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        protected void initChannel(SocketChannel socketChannel) {
                             final ChannelPipeline pipeline = socketChannel.pipeline();
                             pipeline.addLast(new ProtocolFrameDecoder())
                                     //.addLast(new LoggingHandler(LogLevel.DEBUG))

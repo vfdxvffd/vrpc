@@ -4,7 +4,6 @@ import com.vfd.message.RpcResponseMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.concurrent.Promise;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: vfdxvffd
  * @date: 2021/5/10 下午1:31
  */
-@Slf4j
 public class RpcResponseMessageHandler extends SimpleChannelInboundHandler<RpcResponseMessage> {
 
     private final Map<Integer, Promise<Object>> PROMISES = new ConcurrentHashMap<>();

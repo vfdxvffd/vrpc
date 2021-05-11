@@ -16,6 +16,7 @@ import java.util.List;
  * @author: vfdxvffd
  * @date: 2021/5/10 上午10:17
  */
+@SuppressWarnings("unused")
 @ChannelHandler.Sharable
 public class MessageCodec extends MessageToMessageCodec<ByteBuf, Message> {
 

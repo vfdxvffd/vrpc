@@ -6,7 +6,7 @@
 
     <groupId>com.vfd</groupId>
     <artifactId>vrpc</artifactId>
-    <version>0.1-pre-release</version>
+    <version>v0.2-pre-release</version>
 
     <build>
         <plugins>

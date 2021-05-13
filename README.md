@@ -1,11 +1,13 @@
 # vrpc
 
-​		一款基于netty实现的用于Java的rpc框架，现支持创建客户端、服务端对象来进行远程过程调用，后续计划适配到[summer](https://github.com/vfdxvffd/Summer)（一个自己实现的类似Spring的Java框架）框架，利用注解更快的开发。项目持续维护中...欢迎Star！Thanks~~~
+[![](https://img.shields.io/badge/pre--release-v0.2-9cf)](https://github.com/vfdxvffd/vrpc/releases/tag/v0.2)&nbsp;&nbsp;&nbsp;[![](https://img.shields.io/badge/%E9%80%82%E9%85%8DSummer-adapter-important)](https://github.com/vfdxvffd/summer-vrpc)
+
+​		一款基于netty实现的用于Java的rpc框架，现支持创建客户端、服务端对象来进行远程过程调用，并且适配到[summer](https://github.com/vfdxvffd/Summer)（一个自己实现的类似Spring的Java框架）框架，利用注解更快的开发。项目持续维护中...欢迎Star！Thanks~~~
 
 - [x] 基本的远程调用功能
 - [x] 客户端
 - [x] 服务端
-- [ ] 适配到summer框架
+- [x] 适配到summer框架
 
 ## 运行环境
 
@@ -13,7 +15,7 @@ JDK 8
 
 ## 如何使用
 
-​		下载最新release的jar包，将其导入项目中，即可使用。
+​		下载最新release的jar包，将其导入项目中，即可使用。或者使用和`Summer`框架的适配版本，可以利用注解更快开发[https://github.com/vfdxvffd/summer-vrpc](https://github.com/vfdxvffd/summer-vrpc)。
 
 ## 项目梗概
 
@@ -43,6 +45,12 @@ JDK 8
 - 如果是短连接则会在一次调用后断开连接，当下次连接发起的时候又会重新建立连接。这样做的好处是不用一直维护着连接，但是频繁的调用需要重复建立连接和断开连接的操作，效率就会有点低。
 
 ​		综合考虑以上两种连接方式，如果是在一小段时间需要多次调用远程调用，我们可以考虑使用长连接，使用结束后手动关闭连接，如果只是使用一次，则建议使用短连接，这样可以省去关闭的操作（vrpc内部自动关闭）。
+
+## Version 0.2(Pre-Release)
+
+1. 客户端channel的管理方式改为由map进行管理
+2. 增加更多的操作、管理连接的接口方法
+3. 为RpcResponseMessageHandler增加`@Sharable`注解，使其可以被多次加入pipeline
 
 ## Version 0.1(Pre-Release)
 

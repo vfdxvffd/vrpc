@@ -9,6 +9,8 @@ package com.vfd.protocol.serializer;
  */
 public interface Serializer {
 
+    int getID();
+
     <T> T deserializer (Class<T> clazz, byte[] bytes);
 
     <T> byte[] serializer (T o);

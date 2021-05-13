@@ -15,6 +15,11 @@ import java.nio.charset.StandardCharsets;
  */
 public class GsonSerializer implements Serializer {
     @Override
+    public int getID() {
+        return 2;
+    }
+
+    @Override
     public <T> T deserializer(Class<T> clazz, byte[] bytes) {
         Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, new ClassCodec()).create();
         String json = new String(bytes, StandardCharsets.UTF_8);

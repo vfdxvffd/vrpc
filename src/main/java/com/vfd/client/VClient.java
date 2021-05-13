@@ -2,6 +2,7 @@ package com.vfd.client;
 
 import com.vfd.handler.RpcResponseMessageHandler;
 import com.vfd.message.RpcRequestMessage;
+import com.vfd.protocol.Destination;
 import com.vfd.protocol.MessageCodec;
 import com.vfd.protocol.ProtocolFrameDecoder;
 import com.vfd.protocol.SequenceIdGenerator;
@@ -15,6 +16,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.DefaultPromise;
 
 import java.lang.reflect.Proxy;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @PackageName: com.vfd
@@ -31,7 +34,8 @@ public class VClient {
     private Serializer serializer = new FastjsonSerializer();
     private boolean closeConnect = true;
 
-    private Channel channel = null;
+    // private Channel channel = null;
+    public final Map<Destination, Channel> clientChannelMap = new ConcurrentHashMap<>();
 
     RpcResponseMessageHandler RPC_HANDLER = new RpcResponseMessageHandler();
 
@@ -115,10 +119,65 @@ public class VClient {
         this.closeConnect = closeConnect;
     }
 
-    public void closeConnect () {
-        if (channel != null)    channel.close();
-        channel = null;
-        RPC_HANDLER = new RpcResponseMessageHandler();
+    public void closeAllConnect () {
+        for (Destination destination : clientChannelMap.keySet()) {
+            closeConnect(destination);
+        }
+    }
+
+    public void closeConnect (Destination destination) {
+        Channel channel;
+        if ((channel = clientChannelMap.getOrDefault(destination, null)) != null) {
+            channel.close();
+            clientChannelMap.remove(destination);
+        }
+    }
+
+    public void closeConnect (String destHost, int destPort, Serializer serializer) {
+        final Destination destination = new Destination(destHost, destPort, serializer);
+        closeConnect(destination);
+    }
+
+    public void closeConnect (String destHost) {
+        for (Destination destination : clientChannelMap.keySet()) {
+            if (destination.getHost().equals(destHost))
+                closeConnect(destination);
+        }
+    }
+
+    public void closeConnect (int destPort) {
+        for (Destination destination : clientChannelMap.keySet()) {
+            if (destination.getPort() == destPort)
+                closeConnect(destination);
+        }
+    }
+
+    public void closeConnect (Serializer serializer) {
+        for (Destination destination : clientChannelMap.keySet()) {
+            if (destination.getSerializer().getID() == serializer.getID())
+                closeConnect(destination);
+        }
+    }
+
+    public void closeConnect (String destHost, int destPort) {
+        for (Destination destination : clientChannelMap.keySet()) {
+            if (destination.getHost().equals(destHost) && destination.getPort() == destPort)
+                closeConnect(destination);
+        }
+    }
+
+    public void closeConnect (String destHost, Serializer serializer) {
+        for (Destination destination : clientChannelMap.keySet()) {
+            if (destination.getHost().equals(destHost) && destination.getSerializer().getID() == serializer.getID())
+                closeConnect(destination);
+        }
+    }
+
+    public void closeConnect (int destPort, Serializer serializer) {
+        for (Destination destination : clientChannelMap.keySet()) {
+            if (destination.getPort() == destPort && destination.getSerializer().getID() == serializer.getID())
+                closeConnect(destination);
+        }
     }
 
     public <T> T getRemoteObj (Class<T> interfaceType) {
@@ -167,34 +226,35 @@ public class VClient {
                         method.getParameterTypes(),
                         args
                 );
-                final Channel ch = getChannel(destHost, destPort, serializer);
+                Destination destination = new Destination(destHost, destPort, serializer);
+                final Channel ch = getChannel(destination);
                 ch.writeAndFlush(msg);
                 DefaultPromise<Object> promise = new DefaultPromise<>(ch.eventLoop());
                 RPC_HANDLER.getPROMISES().put(sequenceId, promise);
                 promise.await();
                 if (promise.isSuccess()) {
                     final Object now = promise.getNow();
-                    if (closeConnect)   closeConnect();
+                    if (closeConnect)   closeConnect(destination);
                     return now;
                 } else {
                     final Throwable cause = promise.cause();
-                    closeConnect();
+                    closeConnect(destination);
                     throw new RuntimeException(cause);
                 }
             }));
         return (T) o;
     }
 
-    private Channel getChannel (String destHost, int destPort, Serializer serializer) {
-        if (channel == null)
-            initChannel(destHost, destPort, serializer);
-        return channel;
+    private Channel getChannel (Destination destination) {
+        if (clientChannelMap.getOrDefault(destination, null) == null)
+            initChannel(destination);
+        return clientChannelMap.get(destination);
     }
 
-    private void initChannel (String destHost, int destPort, Serializer serializer) {
+    private void initChannel (Destination destination) {
         EventLoopGroup group = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap();
-        MessageCodec MESSAGE_CODEC = new MessageCodec(serializer);
+        MessageCodec MESSAGE_CODEC = new MessageCodec(destination.getSerializer());
         bootstrap.group(group)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
@@ -208,11 +268,13 @@ public class VClient {
                     }
                 });
         try {
-            channel = bootstrap.connect(destHost, destPort).sync().channel();
+            final Channel channel = bootstrap.connect(destination.getHost(), destination.getPort()).sync().channel();
+            clientChannelMap.put(destination, channel);
             final ChannelFuture channelFuture = channel.closeFuture();
             channelFuture.addListener(future -> group.shutdownGracefully());
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            group.shutdownGracefully();
         }
     }
 }

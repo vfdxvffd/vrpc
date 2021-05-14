@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.vfd</groupId>
+    <groupId>com.vfdxvffd</groupId>
     <artifactId>vrpc</artifactId>
-    <version>v0.2-pre-release</version>
+    <version>0.2.PRE-RELEASE</version>
 
     <build>
         <plugins>
